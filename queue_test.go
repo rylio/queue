@@ -1,7 +1,9 @@
 package queue
 
-import "testing"
-import "time"
+import (
+	"testing"
+	"time"
+)
 
 func assert(b bool, s string, t *testing.T) {
 
@@ -11,53 +13,57 @@ func assert(b bool, s string, t *testing.T) {
 	}
 }
 
-func TestLimitedQueue(t *testing.T) {
+func TestSuspend(t *testing.T) {
 
-	q := Init(6)
-	counter := 0
-	for i := 0; i < 200; i++ {
-
+	q := Init()
+	q.ConcurrencyLimit = 5
+	for i := 0; i < 10; i++ {
 		q.Push(func() {
-			defer func() { counter++ }()
-			time.Sleep(10 * time.Millisecond)
+			time.Sleep(100 * time.Millisecond)
 		})
 	}
+	q.Suspend()
+	time.Sleep(time.Millisecond * 200)
+	q.Resume()
 	q.Wait()
-	q.Close()
-	assert(counter == 200, "Incorrect Operation Count", t)
+	q.Close(false)
+
 }
 
-func TestUnlimitedQueue(t *testing.T) {
+func TestCloseImmediate(t *testing.T) {
 
-	q := Init(0)
-	counter := 0
-	for i := 0; i < 200; i++ {
+	q := Init()
+	q.ConcurrencyLimit = 1
+	count := 0
+	for i := 0; i < 8; i++ {
 
 		q.Push(func() {
 
-			defer func() { counter++ }()
-			time.Sleep(200 * time.Millisecond)
+			defer func() { count++ }()
+			time.Sleep(50 * time.Millisecond)
+
 		})
 	}
+	time.Sleep(time.Millisecond * 180)
+	q.Close(true)
 	q.Wait()
-	q.Close()
-	assert(counter == 200, "Incorrect Operation Count", t)
+	assert(count == 4, "", t)
 }
 
-func TestLargeScaleQueue(t *testing.T) {
+func TestCloseAfter(t *testing.T) {
 
-	q := Init(500)
-	counter := 0
-	for i := 0; i < 100000; i++ {
+	q := Init()
+	q.ConcurrencyLimit = 1
+	count := 0
+
+	for i := 0; i < 5; i++ {
 
 		q.Push(func() {
-			defer func() { counter++ }()
-			time.Sleep(time.Millisecond)
-
+			defer func() { count++ }()
+			time.Sleep(100 * time.Millisecond)
 		})
 	}
-
+	q.Close(false)
 	q.Wait()
-	q.Close()
-	assert(counter == 100000, "Incorrect Operation Count", t)
+	assert(count == 5, "", t)
 }
