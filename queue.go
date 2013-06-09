@@ -6,7 +6,7 @@ import "sync"
 // Queue is the queue.
 type Queue struct {
 	push             chan func()
-	pop              chan func()
+	pop              chan struct{}
 	suspend          chan bool
 	close            chan bool
 	ConcurrencyLimit int
@@ -19,7 +19,7 @@ func Init() (q *Queue) {
 	q = &Queue{
 
 		push:    make(chan func()),
-		pop:     make(chan func()),
+		pop:     make(chan struct{}),
 		suspend: make(chan bool),
 		close:   make(chan bool),
 	}
@@ -54,7 +54,7 @@ func (q *Queue) run() {
 
 					f()
 					defer func() {
-						q.pop <- f
+						q.pop <- struct{}{}
 					}()
 				}()
 
