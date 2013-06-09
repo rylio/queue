@@ -1,9 +1,9 @@
+// Package queue is a utility to queue goroutines
 package queue
 
-import (
-	"sync"
-)
+import "sync"
 
+// Queue is the queue.
 type Queue struct {
 	push             chan func()
 	pop              chan func()
@@ -13,7 +13,7 @@ type Queue struct {
 	wg               sync.WaitGroup
 	suspended        bool
 }
-
+// Init initializes a new queue.
 func Init() (q *Queue) {
 
 	q = &Queue{
@@ -28,7 +28,7 @@ func Init() (q *Queue) {
 	return q
 
 }
-
+// Push addes a new function to the end of the Queue
 func (q *Queue) Push(f func()) {
 
 	q.push <- f
@@ -107,17 +107,20 @@ func (q *Queue) run() {
 
 }
 
+// Wait calls Wait on a WaitGroup, which finishes when the Queue is drained or when closed
 func (q *Queue) Wait() {
 
 	q.wg.Wait()
 }
 
+// Suspend stops the execution of functions on the queue, new functions can still be queued.
 func (q *Queue) Suspend() {
 
 	q.suspend <- true
 	q.suspended = true
 }
 
+// Resume starts the execution of functions on the queue, after Suspend has been called.
 func (q *Queue) Resume() {
 
 	q.suspend <- false
@@ -125,11 +128,16 @@ func (q *Queue) Resume() {
 
 }
 
+// Suspended returns whether or not the queue is in a suspended state.
 func (q *Queue) Suspended() bool {
 
 	return q.suspended
 }
 
+// Close cleanups the queue by closing the internal channels.
+// If true is passed as an arguement, the queue closes immediatley only waiting for the currently executing functions to finish.
+// If false is passed the queue finishes executing all the functions in the queue.
+// When called the queue does not allow for anymore functions to be enqueued.
 func (q *Queue) Close(immediate bool) {
 	q.close <- immediate
 
