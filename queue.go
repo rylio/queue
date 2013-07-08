@@ -64,13 +64,13 @@ func (q *Queue) run() {
 
 	}
 
-	cleanUp := func() {
+	defer func() {
 		q.wg.Add(-len(buffer))
 		close(q.push)
 		close(q.pop)
 		close(q.suspend)
 		close(q.close)
-	}
+	}()
 
 	for {
 
@@ -98,7 +98,6 @@ func (q *Queue) run() {
 				closed = true
 			}
 			if closed {
-				cleanUp()
 				return
 			}
 		}
