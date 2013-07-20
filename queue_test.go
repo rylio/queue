@@ -5,14 +5,6 @@ import (
 	"sync/atomic"
 )
 
-func assert(b bool, s string, t *testing.T) {
-
-	if !b {
-
-		t.Fatal(s)
-	}
-}
-
 func TestQueue (t *testing.T) {
 
 	var count int32 = 0
