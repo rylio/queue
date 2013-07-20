@@ -2,7 +2,7 @@ package queue
 
 import (
 	"testing"
-	"time"
+	"sync/atomic"
 )
 
 func assert(b bool, s string, t *testing.T) {
@@ -13,57 +13,25 @@ func assert(b bool, s string, t *testing.T) {
 	}
 }
 
-func TestSuspend(t *testing.T) {
+func TestQueue (t *testing.T) {
 
-	q := Init()
-	q.ConcurrencyLimit = 5
-	for i := 0; i < 10; i++ {
-		q.Push(func() {
-			time.Sleep(100 * time.Millisecond)
-		})
+	var count int32 = 0
+	handler := func(val interface{}) {
+
+		atomic.AddInt32(&count, int32(val.(int)))
+
 	}
-	q.Suspend()
-	time.Sleep(time.Millisecond * 200)
-	q.Resume()
-	q.Wait()
-	q.Close(false)
+	q := NewQueue(handler, 5)
 
-}
+	for i := 0; i < 200; i++ {
 
-func TestCloseImmediate(t *testing.T) {
-
-	q := Init()
-	q.ConcurrencyLimit = 1
-	count := 0
-	for i := 0; i < 8; i++ {
-
-		q.Push(func() {
-
-			defer func() { count++ }()
-			time.Sleep(50 * time.Millisecond)
-
-		})
+		q.Push(i)
 	}
-	time.Sleep(time.Millisecond * 180)
-	q.Close(true)
+
 	q.Wait()
-	assert(count == 4, "", t)
-}
+	if count != 19900 {
 
-func TestCloseAfter(t *testing.T) {
-
-	q := Init()
-	q.ConcurrencyLimit = 1
-	count := 0
-
-	for i := 0; i < 5; i++ {
-
-		q.Push(func() {
-			defer func() { count++ }()
-			time.Sleep(100 * time.Millisecond)
-		})
+		t.Fail()
 	}
-	q.Close(false)
-	q.Wait()
-	assert(count == 5, "", t)
+
 }
