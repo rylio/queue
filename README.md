@@ -2,7 +2,7 @@ queue
 =====
 
 #### Run tasks on seperate goroutines with control
-<br/>
+
 ### Basic Example
 
     import "github.com/otium/queue"
