@@ -1,3 +1,4 @@
+// Package queue provides a queue for running tasks concurrently up to a certain limit.
 package queue
 
 import (
@@ -18,12 +19,20 @@ type queue struct {
 	count            int
 	wg               sync.WaitGroup
 }
-
+// Queue is the queue
+// Queue also has the members Handler and ConcurrencyLimit which can be set at anytime
 type Queue struct {
 	*queue
 }
 
-func NewQueue(handler func(interface{}), concurrencyLimit int) *Queue {
+// Handler is a function that takes any value, and is called every time a task is processed from the queue
+type Handler func(interface{})
+
+
+// NewQueue must be called to initialize a new queue.
+// The first argument is a Handler
+// The second argument is an int which specifies how many operation can run in parallel in the queue, zero means unlimited.
+func NewQueue(handler Handler, concurrencyLimit int) *Queue {
 
 	q := &Queue{
 		&queue{
@@ -41,21 +50,24 @@ func NewQueue(handler func(interface{}), concurrencyLimit int) *Queue {
 	return q
 }
 
+// Push pushes a new value to the end of the queue
 func (q *Queue) Push(val interface{}) {
 	q.push <- val
 }
-
+// Stop stops the queue from executing anymore tasks, and waits for the currently executing tasks to finish.
+// The queue can not be started again once this is called
 func (q *Queue) Stop() {
 
 	q.stop <- struct{}{}
 	runtime.SetFinalizer(q, nil)
 }
-
+// Wait calls wait on a waitgroup, that waits for all items of the queue to finish execution
 func (q *Queue) Wait() {
 
 	q.wg.Wait()
 }
 
+// Count returns the number of currently executing tasks and the number of tasks waiting to be executed
 func (q *Queue) Count() (_, _ int) {
 
 	return q.count, len(q.buffer)
