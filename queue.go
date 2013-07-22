@@ -10,7 +10,7 @@ type queue struct {
 	Handler          func(interface{})
 	ConcurrencyLimit int
 	push             chan interface{}
-	pop              chan interface{}
+	pop              chan struct{}
 	suspend          chan bool
 	suspended        bool
 	stop             chan struct{}
