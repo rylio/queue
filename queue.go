@@ -10,7 +10,7 @@ type queue struct {
 	Handler          func(interface{})
 	ConcurrencyLimit int
 	push             chan interface{}
-	pop              chan struct{}
+	pop              chan interface{}
 	suspend          chan bool
 	suspended        bool
 	stop             chan struct{}
@@ -19,6 +19,7 @@ type queue struct {
 	count            int
 	wg               sync.WaitGroup
 }
+
 // Queue is the queue
 // Queue also has the members Handler and ConcurrencyLimit which can be set at anytime
 type Queue struct {
@@ -27,7 +28,6 @@ type Queue struct {
 
 // Handler is a function that takes any value, and is called every time a task is processed from the queue
 type Handler func(interface{})
-
 
 // NewQueue must be called to initialize a new queue.
 // The first argument is a Handler
@@ -54,6 +54,7 @@ func NewQueue(handler Handler, concurrencyLimit int) *Queue {
 func (q *Queue) Push(val interface{}) {
 	q.push <- val
 }
+
 // Stop stops the queue from executing anymore tasks, and waits for the currently executing tasks to finish.
 // The queue can not be started again once this is called
 func (q *Queue) Stop() {
@@ -61,6 +62,7 @@ func (q *Queue) Stop() {
 	q.stop <- struct{}{}
 	runtime.SetFinalizer(q, nil)
 }
+
 // Wait calls wait on a waitgroup, that waits for all items of the queue to finish execution
 func (q *Queue) Wait() {
 
@@ -68,7 +70,7 @@ func (q *Queue) Wait() {
 }
 
 // Count returns the number of currently executing tasks and the number of tasks waiting to be executed
-func (q *Queue) Count() (_, _ int) {
+func (q *Queue) Len() (_, _ int) {
 
 	return q.count, len(q.buffer)
 }
